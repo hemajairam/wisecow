@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wisecow-deployment
+  name: wisecow
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: wisecow
@@ -14,7 +14,19 @@ spec:
     spec:
       containers:
         - name: wisecow
-          image: hemajairam/wisecow:latest   # Use your Docker Hub image if pushing
+          image: hemajairam/wisecow:v1.0
           ports:
             - containerPort: 4499
-          
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: wisecow-nginx-config
+ 

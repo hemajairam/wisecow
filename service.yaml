@@ -3,12 +3,15 @@ kind: Service
 metadata:
   name: wisecow-service
 spec:
-  type: LoadBalancer
   selector:
     app: wisecow
   ports:
     - protocol: TCP
-      port: 4499
+      port: 80
       targetPort: 4499
+  type: ClusterIP
+
+
+
 
 
