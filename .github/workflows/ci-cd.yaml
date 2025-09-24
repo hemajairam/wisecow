@@ -6,24 +6,55 @@ on:
       - main
 
 jobs:
-  build-and-push:
+
+  # ----------------------
+  # CI: Push existing Docker image
+  # ----------------------
+  push-existing-image:
+    name: Push Existing Docker Image
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Docker image
-        run: docker build -t hemajairam/wisecow:latest .
+      - name: Tag and Push Docker image
+        run: |
+          docker tag wisecow:latest hemajairam/wisecow:v1.0
+          docker push hemajairam/wisecow:v1.0
 
-      - name: Push Docker image
-        run: docker push hemajairam/wisecow:latest
+  # ----------------------
+  # CD: Deploy to Kubernetes
+  # ----------------------
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: push-existing-image
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.0'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+
+      - name: Update Deployment with new image
+        run: |
+          kubectl set image deployment/wisecow wisecow=hemajairam/wisecow:v1.0 -n default
+          kubectl rollout status deployment/wisecow -n default
+
+      - name: Test Deployment
+        run: |
+          curl -k https://wisecow.local
+
 
