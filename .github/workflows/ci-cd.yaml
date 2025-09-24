@@ -14,42 +14,53 @@ jobs:
       IMAGE_TAG: latest
 
     steps:
+      # Step 1: Checkout code
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Step 2: Setup Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Step 3: Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Step 4: Build Docker image
       - name: Build Docker image
         run: |
           docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
+      # Step 5: Push Docker image
       - name: Push Docker image
         run: |
           docker push $IMAGE_NAME:$IMAGE_TAG
 
+      # Step 6: Setup kubeconfig
       - name: Set up Kubeconfig
         run: |
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
 
+      # Step 7: Apply Kubernetes TLS Secret
+      - name: Apply Kubernetes TLS secret
+        run: |
+          kubectl apply -f k8s/certs/wisecow-tls.yaml
+
+      # Step 8: Apply Deployment, Service, and Ingress
       - name: Apply Kubernetes manifests
         run: |
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/ingress.yaml
 
-      - name: Verify deployment
+      # Step 9: Verify deployment with HTTPS
+      - name: Verify Wisecow HTTPS endpoint
         run: |
-          # Optional: start minikube tunnel in background if needed
-          nohup minikube tunnel &
+          # Optional: wait a few seconds for ingress to be ready
           sleep 10
           curl -k https://wisecow.local
 
