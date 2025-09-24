@@ -6,18 +6,19 @@ metadata:
     kubernetes.io/ingress.class: nginx
 spec:
   tls:
-    - hosts:
-        - wisecow.local
-      secretName: wisecow-tls
+  - hosts:
+    - wisecow.local
+    secretName: wisecow-tls
   rules:
-    - host: wisecow.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: wisecow-service
-                port:
-                  number: 80
+  - host: wisecow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wisecow-service
+            port:
+              number: 4499
+
 

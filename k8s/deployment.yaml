@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: wisecow
+  labels:
+    app: wisecow
 spec:
   replicas: 1
   selector:
@@ -15,7 +17,14 @@ spec:
       containers:
         - name: wisecow
           image: hemajairam/wisecow:v1.0
+          imagePullPolicy: Always
           ports:
             - containerPort: 4499
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "250m"
+
+
 
  
