@@ -37,11 +37,24 @@ jobs:
       - name: Set up Kubeconfig
         run: |
           mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG_BASE64 }}" | base64 --decode > $HOME/.kube/config
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
 
       - name: Apply Kubernetes manifests
         run: |
-          kubectl apply -f k8s/deploym
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/ingress.yaml
+
+      - name: Verify deployment
+        run: |
+          # Optional: Start Minikube tunnel in background if needed for testing
+          nohup minikube tunnel &
+
+          # Wait a few seconds for tunnel to establish
+          sleep 10
+
+          # Verify Wisecow is responding
+          curl -k https://wisecow.local
 
 
 
