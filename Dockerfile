@@ -1,26 +1,28 @@
-# Use a lightweight base image
-FROM ubuntu:24.04
-
-# Install required dependencies
-RUN apt-get update && \
-    apt-get install -y fortune-mod cowsay netcat-openbsd && \
-    rm -rf /var/lib/apt/lists/*
-
-# Add /usr/games to PATH (fortune and cowsay live here)
-ENV PATH="/usr/games:${PATH}"
+# Use Debian slim as base
+FROM debian:bookworm-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy your application script
-COPY wisecow.sh /app/wisecow.sh
-RUN chmod +x /app/wisecow.sh
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    fortune cowsay netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/*
 
-# Expose the port your script listens on
+ENV PATH="/usr/games:${PATH}"
+
+# Copy Wisecow script
+COPY wisecow.sh .
+
+# Make script executable
+RUN chmod +x wisecow.sh
+
+# Expose port
 EXPOSE 4499
 
-# Run the application
+# Run the script
 CMD ["./wisecow.sh"]
+
 
 
 
