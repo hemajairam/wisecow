@@ -38,6 +38,7 @@ jobs:
         run: |
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
 
       - name: Apply Kubernetes manifests
         run: |
@@ -47,13 +48,9 @@ jobs:
 
       - name: Verify deployment
         run: |
-          # Optional: Start Minikube tunnel in background if needed for testing
+          # Optional: start minikube tunnel in background if needed
           nohup minikube tunnel &
-
-          # Wait a few seconds for tunnel to establish
           sleep 10
-
-          # Verify Wisecow is responding
           curl -k https://wisecow.local
 
 
