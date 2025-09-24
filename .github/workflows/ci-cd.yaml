@@ -6,55 +6,54 @@ on:
       - main
 
 jobs:
-
-  # ----------------------
-  # CI: Push existing Docker image
-  # ----------------------
-  push-existing-image:
-    name: Push Existing Docker Image
+  build-and-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      IMAGE_NAME: hemajairam/wisecow
+      IMAGE_TAG: latest
+
     steps:
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Tag and Push Docker image
+      - name: Build Docker image
         run: |
-          docker tag wisecow:latest hemajairam/wisecow:v1.0
-          docker push hemajairam/wisecow:v1.0
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
-  # ----------------------
-  # CD: Deploy to Kubernetes
-  # ----------------------
-  deploy:
-    name: Deploy to Kubernetes
-    runs-on: ubuntu-latest
-    needs: push-existing-image
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'v1.29.0'
-
-      - name: Configure kubeconfig
+      - name: Push Docker image
         run: |
-          mkdir -p $HOME/.kube
+          docker push $IMAGE_NAME:$IMAGE_TAG
+
+      - name: Set up Kubeconfig
+        run: |
           echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
 
-      - name: Update Deployment with new image
+      - name: Apply Kubernetes manifests
         run: |
-          kubectl set image deployment/wisecow wisecow=hemajairam/wisecow:v1.0 -n default
-          kubectl rollout status deployment/wisecow -n default
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/ingress.yaml
 
-      - name: Test Deployment
+      - name: Verify deployment
         run: |
+          # Start Minikube tunnel in background
+          nohup minikube tunnel &
+
+          # Wait a few seconds for tunnel to establish
+          sleep 10
+
+          # Verify Wisecow is responding
           curl -k https://wisecow.local
+
 
 
