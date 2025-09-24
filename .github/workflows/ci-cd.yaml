@@ -55,11 +55,12 @@ jobs:
           kubectl wait --for=condition=ready pod -l app=wisecow --timeout=120s
 
       # 9. Test deployment
-      - name: Test Wisecow app
+      - name: Port forward Wisecow service
         run: |
-          kubectl port-forward svc/wisecow-service 4499:4499 &
-          sleep 10
-          curl -k https://localhost:4499
+          kubectl port-forward svc/wisecow-service 8080:80 &
+          sleep 5
+          curl -k http://localhost:8080
+
 
 
 
